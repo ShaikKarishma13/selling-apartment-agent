@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./styles.css";
 import LeadForm from "./components/LeadForm";
 import LeadList from "./components/LeadList";
 
@@ -10,14 +11,18 @@ function App() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>🏢 Apartment Sales Agent Dashboard</h1>
 
-      <LeadForm onAddLead={addLead} />
+  <div className="container">
+    <h1>🏢 Apartment Sales Agent Dashboard</h1>
 
-      <LeadList leads={leads} />
-    </div>
-  );
+    <LeadForm onAddLead={addLead} />
+
+    <LeadList leads={leads} />
+  </div>
+);
+    
 }
 
 export default App;
+
+
