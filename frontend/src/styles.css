@@ -1,3 +1,7 @@
+:root {
+  --sidebar-width: 180px;
+}
+
 body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
@@ -5,7 +9,7 @@ body {
   height: 100vh;
 }
 
-/* Navbar */
+/* ================= NAVBAR ================= */
 .navbar {
   text-align: center;
   padding: 18px;
@@ -15,14 +19,13 @@ body {
   letter-spacing: 1px;
 }
 
-/* Main layout */
+/* ================= AUTH PAGE ================= */
 .main {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 90vh;
-
-  
+  position: relative;
 
   background-image: url("./assets/agent.png");
   background-repeat: no-repeat;
@@ -30,20 +33,9 @@ body {
   background-position: 70% center;
 }
 
-/* 🔥 BACKGROUND IMAGE (robot) */
-.bg-image {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  height: 85vh;
-  object-fit: contain;
-  pointer-events: none;
-  z-index: 0;
-}
-
 /* Card */
 .container {
-  position: relative;   
+  position: relative;
   z-index: 1;
 
   background: rgba(255, 255, 255, 0.2);
@@ -52,10 +44,11 @@ body {
   border-radius: 20px;
   width: 400px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  text-align: center;
 }
 
 /* Inputs */
-input {
+.container input {
   width: 100%;
   padding: 12px;
   margin: 10px 0;
@@ -65,7 +58,8 @@ input {
   box-sizing: border-box;
 }
 
-button {
+/* Button */
+.container button {
   width: 100%;
   padding: 12px;
   border: none;
@@ -76,13 +70,74 @@ button {
   cursor: pointer;
   transition: 0.3s;
   box-sizing: border-box;
-} 
+}
 
-button:hover {
+.container button:hover {
   transform: scale(1.05);
 }
 
-/* Lead item */
+/* ================= SIDEBAR ================= */
+.sidebar {
+  width: var(--sidebar-width);
+  background: #111827;
+  color: white;
+  padding: 20px;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.logo {
+  margin-bottom: 30px;
+}
+
+.menu {
+  list-style: none;
+  padding: 0;
+}
+
+.menu li {
+  margin: 15px 0;
+}
+
+.menu li a {
+  color: white;
+  text-decoration: none;
+}
+
+.menu li a:hover {
+  color: #4facfe;
+}
+
+/* Logout */
+.logout {
+  position: absolute;
+  bottom: 20px;
+  cursor: pointer;
+}
+
+/* ================= DASHBOARD CONTENT ================= */
+.main-content {
+  margin-left: var(--sidebar-width);
+  padding: 20px;
+  width: calc(100% - var(--sidebar-width));
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.topbar input {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+}
+
+/* ================= LEADS ================= */
 .lead-item {
   display: flex;
   justify-content: space-between;
@@ -92,4 +147,41 @@ button:hover {
   margin-top: 10px;
 }
 
+/* ================= METRIC CARDS ================= */
+.cards {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
 
+.card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  border-radius: 15px;
+  width: 220px;
+  color: white;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.card p {
+  font-size: 28px;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+/* ================= DASHBOARD LAYOUT ================= */
+.dashboard {
+  display: flex;
+}
