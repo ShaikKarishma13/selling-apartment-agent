@@ -25,3 +25,4 @@ function LeadList({ leads, onDelete }) {
 }
 
 export default LeadList;
+
