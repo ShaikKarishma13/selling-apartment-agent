@@ -12,17 +12,25 @@ function App() {
 
   return (
 
-  <div className="container">
-    <h1>🏢 Apartment Sales Agent Dashboard</h1>
+  <div>
+    <div className="navbar">
+      🏢 Apartment Sales AI Agent
+    </div>
 
-    <LeadForm onAddLead={addLead} />
+    <div className="container">
+      <h1>Dashboard</h1>
 
-    <LeadList leads={leads} />
+      <LeadForm onAddLead={addLead} />
+
+      <LeadList leads={leads} />
+    </div>
   </div>
 );
+  
     
 }
 
 export default App;
+
 
 
