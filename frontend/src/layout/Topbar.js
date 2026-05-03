@@ -1,11 +1,11 @@
 function Topbar() {
   return (
     <div className="topbar">
-      <input placeholder="Search..." />
+      <input type="text" placeholder="Search..." />
 
-      <div className="topbar-right">
-        🔔
-        👤
+      <div className="top-icons">
+        <span>🔔</span>
+        <span>👤</span>
       </div>
     </div>
   );

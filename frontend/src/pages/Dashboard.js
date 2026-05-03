@@ -1,17 +1,16 @@
 import Sidebar from "../layout/Sidebar";
+import Topbar from "../layout/Topbar";
 
 function Dashboard() {
   return (
     <div className="dashboard">
-      
+
       <Sidebar />
 
       <div className="main-content">
         
-        <div className="topbar">
-          <input type="text" placeholder="Search..." />
-          <div>🔔 👤</div>
-        </div>
+        {/* ✅ ONLY ONE TOPBAR */}
+        <Topbar />
 
         <h1>Dashboard Overview 🚀</h1>
 

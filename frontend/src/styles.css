@@ -134,11 +134,18 @@ body {
 }
 
 .topbar input {
-  padding: 12px 15px;
-  border-radius: 10px;
-  border: none;
   width: 250px;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
   
+}
+.top-icons {
+  display: flex;
+  gap: 15px;
+  font-size: 20px;
+  color: white;
 }
 
 /* ================= LEADS ================= */
