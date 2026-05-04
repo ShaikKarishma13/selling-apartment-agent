@@ -47,7 +47,7 @@ function Dashboard({ leads }) {
           TEST COMPONENT
         </div>
 
-        <ChartSection />
+        <ChartSection leads={leads} />
       </div>
     </div>
   );

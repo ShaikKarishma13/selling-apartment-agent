@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PieChartSection from "../components/PieChartSection";
 
 function Leads({ leads, setLeads }) {
   const [name, setName] = useState("");
@@ -19,28 +20,19 @@ function Leads({ leads, setLeads }) {
       return;
     }
 
-    // ✅ STRICT 10 DIGITS
     if (!/^[0-9]{10}$/.test(phone)) {
       alert("Phone must be exactly 10 digits");
       return;
     }
 
-    // ✅ DUPLICATE CHECK
     if (leads.some((lead) => lead.phone === phone)) {
       alert("Duplicate phone number not allowed");
       return;
     }
 
-    // ✅ STEP 3 (IMPORTANT LINE — YOU ALREADY DID THIS ✔)
-    const newLead = {
-      name,
-      phone,
-      status,
-    };
-
+    const newLead = { name, phone, status, createdAt: new Date(), };
     setLeads([...leads, newLead]);
 
-    // RESET
     setName("");
     setPhone("");
     setStatus("Hot");
@@ -65,68 +57,80 @@ function Leads({ leads, setLeads }) {
 
   return (
     <div className="main-content">
-      <div className="leads-wrapper">
 
-        <h1>Leads Management 📋</h1>
+      <h1>Leads Management 📋</h1>
 
-        {/* 🔍 SEARCH */}
-        <input
-          type="text"
-          placeholder="Search by name or number..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="search-input"
-        />
+      {/* 🔍 SEARCH */}
+      <input
+        type="text"
+        placeholder="Search by name or number..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="search-input"
+      />
 
-        {/* 🔽 FILTER */}
-        <div style={{ marginBottom: "15px" }}>
-          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option value="All">All Leads</option>
-            <option value="Hot">🔥 Hot</option>
-            <option value="Warm">🌤️ Warm</option>
-            <option value="Cold">❄️ Cold</option>
-          </select>
-        </div>
+      {/* 🔽 FILTER */}
+      <div style={{ marginBottom: "15px" }}>
+        <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+          <option value="All">All Leads</option>
+          <option value="Hot">🔥 Hot</option>
+          <option value="Warm">🌤️ Warm</option>
+          <option value="Cold">❄️ Cold</option>
+        </select>
+      </div>
 
-        {/* ➕ FORM */}
-        <div className="lead-form">
-          <input
-            type="text"
-            placeholder="Enter Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+      {/* 🔥 MAIN 2-COLUMN LAYOUT */}
+      <div className="leads-container">
 
-          <input
-            type="text"
-            placeholder="Enter Phone"
-            value={phone}
-            maxLength={10}
-            onChange={(e) => setPhone(e.target.value)}
-          />
+        {/* LEFT SIDE */}
+        <div className="leads-left">
 
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="Hot">🔥 Hot</option>
-            <option value="Warm">🌤️ Warm</option>
-            <option value="Cold">❄️ Cold</option>
-          </select>
+          {/* FORM */}
+          <div className="lead-form">
+            <input
+              type="text"
+              placeholder="Enter Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
 
-          <button onClick={handleAdd}>Add Lead</button>
-        </div>
+            <input
+              type="text"
+              placeholder="Enter Phone"
+              value={phone}
+              maxLength={10}
+              onChange={(e) => setPhone(e.target.value)}
+            />
 
-        {/* 📋 LIST */}
-        {filteredLeads.map((lead) => (
-          <div key={lead.phone} className="lead-item">
-            <span>
-              {lead.name} ({lead.phone})
-              <span className={`status ${lead.status.toLowerCase()}`}>
-                {" "}{lead.status}
-              </span>
-            </span>
+            <select value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="Hot">🔥 Hot</option>
+              <option value="Warm">🌤️ Warm</option>
+              <option value="Cold">❄️ Cold</option>
+            </select>
 
-            <button onClick={() => handleDelete(lead.phone)}>❌</button>
+            <button onClick={handleAdd}>Add Lead</button>
           </div>
-        ))}
+
+          {/* LIST */}
+          {filteredLeads.map((lead) => (
+            <div key={lead.phone} className="lead-item">
+              <span>
+                {lead.name} ({lead.phone})
+                <span className={`status ${lead.status.toLowerCase()}`}>
+                  {" "}{lead.status}
+                </span>
+              </span>
+
+              <button onClick={() => handleDelete(lead.phone)}>❌</button>
+            </div>
+          ))}
+
+        </div>
+
+        {/* RIGHT SIDE → PIE CHART */}
+        <div className="leads-right">
+          <PieChartSection leads={leads} setFilter={setFilter}/>
+        </div>
 
       </div>
     </div>
