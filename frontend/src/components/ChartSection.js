@@ -28,40 +28,33 @@ function ChartSection({ leads }) {
   });
 
   return (
-    <div>
-
+    <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
+      
       {/* 🔵 LINE CHART */}
-      <div className="chart-container">
+      <div className="chart-container" style={{ height: "300px" }}>
         <h2>Leads This Week 📈</h2>
 
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
+            <CartesianGrid stroke="#ccc" />
             <XAxis dataKey="name" stroke="#fff" />
             <YAxis stroke="#fff" />
             <Tooltip />
-
-            <Line
-              type="monotone"
-              dataKey="leads"
-              stroke="#00f5ff"
-              strokeWidth={3}
-            />
+            <Line type="monotone" dataKey="leads" stroke="#00f5ff" strokeWidth={3} />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
       {/* 🟠 BAR CHART */}
-      <div className="chart-container">
+      <div className="chart-container" style={{ height: "300px" }}>
         <h2>Weekly Performance 📊</h2>
 
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
+            <CartesianGrid stroke="#ccc" />
             <XAxis dataKey="name" stroke="#fff" />
             <YAxis stroke="#fff" />
             <Tooltip />
-
             <Bar dataKey="leads" fill="#ff7f50" />
           </BarChart>
         </ResponsiveContainer>
