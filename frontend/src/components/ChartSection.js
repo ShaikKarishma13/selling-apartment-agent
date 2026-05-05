@@ -34,7 +34,7 @@ function ChartSection({ leads }) {
       <div className="chart-container" style={{ height: "300px" }}>
         <h2>Leads This Week 📈</h2>
 
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="90%">
           <LineChart data={data}>
             <CartesianGrid stroke="#ccc" />
             <XAxis dataKey="name" stroke="#fff" />
@@ -46,10 +46,10 @@ function ChartSection({ leads }) {
       </div>
 
       {/* 🟠 BAR CHART */}
-      <div className="chart-container" style={{ height: "300px" }}>
+      <div className="chart-container" style={{ height: "350px" }}>
         <h2>Weekly Performance 📊</h2>
 
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="90%">
           <BarChart data={data}>
             <CartesianGrid stroke="#ccc" />
             <XAxis dataKey="name" stroke="#fff" />

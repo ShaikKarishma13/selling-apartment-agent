@@ -11,7 +11,10 @@ function Sidebar() {
         <li><Link to="/leads">👥 Leads</Link></li>
         <li><Link to="/calls">📞 Calls</Link></li>
         <li><Link to="/analytics">📊 Analytics</Link></li>
-        <li><Link to="/followups">📅 Follow-ups</Link></li>
+
+        {/* ✅ FIXED ROUTE */}
+        <li><Link to="/follow-ups">📅 Follow-ups</Link></li>
+
         <li><Link to="/settings">⚙️ Settings</Link></li>
       </ul>
 

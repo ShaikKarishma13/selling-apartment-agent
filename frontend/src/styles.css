@@ -6,7 +6,8 @@ body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
   background: linear-gradient(135deg, #4facfe, #6a11cb);
-  height: 100vh;
+  background-attachment: fixed;
+  min-height: 100vh;
 }
 
 /* ================= NAVBAR ================= */
@@ -114,6 +115,7 @@ body {
   margin-left: var(--sidebar-width);
   padding: 30px 40px;
   width: calc(100% - var(--sidebar-width));
+  max-width: 1200px;
 }
 
 /* ================= TOPBAR ================= */
@@ -170,12 +172,13 @@ h1 {
 /* ================= CHART ================= */
 .chart-container {
   margin-top: 40px;
-  padding: 25px;
+  padding: 25px 25px 50px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
   box-shadow: 0 8px 30px rgba(0,0,0,0.2);
   color: white;
+  width: 100%;
 }
 
 /* ================= LEADS PAGE ================= */
@@ -349,4 +352,114 @@ h1 {
 }
 .charts-section {
   width: 100%;
+}
+.follow-tag {
+  margin-left: 10px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: white;
+}
+
+.follow-tag.overdue {
+  background: red;
+}
+
+.follow-tag.today {
+  background: orange;
+}
+
+.follow-tag.upcoming {
+  background: green;
+}
+.follow-section {
+  margin-top: 30px;
+  padding: 20px;
+  border-radius: 15px;
+  background: rgba(255,255,255,0.1);
+  max-width: 900px;
+}
+
+.follow-item {
+  margin-top: 10px;
+  padding: 12px 15px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.follow-item .date {
+  background: #222;
+  padding: 5px 10px;
+  border-radius: 8px;
+}
+.date {
+  background: linear-gradient(135deg, #222, #444);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.overdue .date {
+  background: #ff4d4d;
+}
+
+.today .date {
+  background: #ffa500;
+}
+
+.upcoming .date {
+  background: #4caf50;
+}
+/* ================= SETTINGS ================= */
+
+.settings-card {
+  background: rgba(255,255,255,0.12);
+  padding: 20px;
+  border-radius: 15px;
+  margin-top: 20px;
+  backdrop-filter: blur(12px);
+  color: white;
+  width: 100%;
+  max-width: 700px;
+}
+
+.settings-card textarea {
+  width: 100%;
+  height: 100px;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+}
+
+.settings-card input,
+.settings-card select {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+}
+
+.save-btn {
+  margin-top: 30px;
+  padding: 14px 24px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(90deg, #00f5ff, #5b86e5);
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  transition: 0.3s;
+}
+
+.save-btn:hover {
+  transform: scale(1.05);
 }

@@ -2,9 +2,10 @@ import Sidebar from "../layout/Sidebar";
 import Topbar from "../layout/Topbar";
 import ChartSection from "../components/ChartSection";
 
-function Dashboard({ leads = [] }) {
+function Dashboard({ leads = [], activities = [] }) {
   console.log("Dashboard loaded");
   console.log("Leads data:", leads);
+  console.log("Activities:", activities);
 
   const totalLeads = leads.length;
 
@@ -91,12 +92,18 @@ function Dashboard({ leads = [] }) {
           <div className="activity-feed">
             <h2>Activity Feed 🔔</h2>
 
-            {leads.length === 0 ? (
+            {activities.length === 0 ? (
               <p>No activity yet</p>
             ) : (
-              leads.slice(-5).reverse().map((lead) => (
-                <div key={lead.phone} className="activity-item">
-                  New lead added: <b>{lead.name}</b> ({lead.status})
+              activities.slice(0, 5).map((act, index) => (
+                <div key={index} className="activity-item">
+                  <b>
+                    {new Date(act.time).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </b>{" "}
+                  - {act.text}
                 </div>
               ))
             )}
