@@ -21,20 +21,30 @@ function Leads({ leads, setLeads, setActivities }) {
 
     try {
 
-      const response = await axios.get(
-        "http://127.0.0.1:8000/api/chat/all-leads"
-      );
+     const response = await axios.get(
+  "http://127.0.0.1:8000/api/chat/all-leads"
+);
+      const backendLeads = (response.data || []).map((item) => ({
+  id: item.id,
+     name: item.name,
 
-      const backendLeads = response.data.map((item) => ({
-        name: item.message?.split(" ")[4] || "Unknown",
-        phone: "N/A",
-        status: "Warm",
-        userMessage: item.message,
-        aiResponse: item.response,
-        sentiment: "Fetched from backend",
-        budget: "Medium",
-        location: "Hyderabad",
-        createdAt: item.timestamp,
+phone: item.phone,
+
+status: item.status,
+
+budget: item.budget,
+
+location: item.location,
+
+followUpDate: item.follow_up_date,
+
+createdAt: item.created_at,
+
+userMessage: item.message,
+
+aiResponse: item.ai_response,
+
+sentiment: item.status,
       }));
 
       setLeads(backendLeads);
@@ -117,57 +127,93 @@ function Leads({ leads, setLeads, setActivities }) {
     }
 
     // ===== ADD MODE =====
-    else {
-      if (leads.some((lead) => lead.phone === phone)) {
-        alert("Duplicate phone number not allowed");
-        return;
-      }
+    
+if (leads.some((lead) => lead.phone === phone)) {
+  alert("Duplicate phone number not allowed");
+  return;
+}
 
-      const saveLeadToBackend = async () => {
+const saveLeadToBackend = async () => {
+
   try {
-    const response = await axios.post(
-      "http://127.0.0.1:8000/api/chat/process-input",
-      {
-        session_id: phone,
-        user_input: `Hi, I am ${name}. Looking for apartment in ${location} with ${budget} budget.`,
-        history: [],
-      }
-    );
 
-    console.log(response.data);
-
-    const newLead = {
-      name,
-      phone,
-      userMessage: `Hi, I am ${name}. Looking for apartment in ${location} with ${budget} budget.`,
-      status: response.data.detected_intent,
-      aiResponse: response.data.response_text,
-      sentiment: response.data.sentiment,
-      budget: budget || "Low",
-      location: location || "Hyderabad",
-      createdAt: new Date(),
-      followUpDate: followUpDate || null,
+    
       
-    };
+const payload = {
+  session_id: phone,
 
-    setLeads((prev) => [...prev, newLead]);
+  user_input: `Hi, I am ${name}. Looking for apartment in ${location} with ${budget} budget.`,
+
+  history: [],
+
+  name: name,
+  phone: phone,
+  status: status,
+budget: budget || "Medium",
+location: location || "Hyderabad",
+  follow_up_date: followUpDate || ""
+};
+
+const response = await axios.post(
+  "http://127.0.0.1:8000/api/chat/process-input",
+  payload
+);
+
+console.log(payload);
+
+
+
+const savedLead = {
+
+  id: response.data.id,
+
+  name: name,
+
+  phone: phone,
+
+  status: status,
+
+  budget: budget,
+
+  location: location,
+
+  followUpDate: followUpDate,
+
+  createdAt: new Date().toISOString(),
+
+  userMessage:
+    `Hi, I am ${name}. Looking for apartment in ${location} with ${budget} budget.`,
+
+  aiResponse:
+    response.data.response_text || "No AI response",
+
+  sentiment:
+    response.data.sentiment || "Warm lead",
+
+};
+
+setLeads((prev) => [...prev, savedLead]);
 
     logActivity(`AI analyzed ${name}`);
-    logActivity(`Lead classified as ${response.data.detected_intent}`);
+
+    logActivity(`Lead classified as ${status}`);
+
+    if (followUpDate) {
+
+      logActivity(
+        `Follow-up scheduled for ${name} on ${followUpDate}`
+      );
+    }
 
   } catch (error) {
+
     console.error(error);
+
     alert("Backend connection failed");
   }
 };
 
 saveLeadToBackend();
-
-      if (followUpDate) {
-        logActivity(`AI scheduled follow-up for ${name} on ${followUpDate}`);
-      }
-    }
-
     // RESET
     setName("");
     setPhone("");
@@ -178,20 +224,36 @@ saveLeadToBackend();
   };
 
   // ✅ DELETE
-  const handleDelete = (phone) => {
-    const leadToDelete = leads.find((l) => l.phone === phone);
+const handleDelete = async (id) => {
 
-    setLeads(leads.filter((lead) => lead.phone !== phone));
+  try {
 
-    // 🔥 AI STYLE LOG
-    logActivity(`AI removed lead: ${leadToDelete.name}`);
-  };
+    await axios.delete(
+      `http://127.0.0.1:8000/api/chat/delete-lead/${id}`
+    );
+
+    setLeads((prev) =>
+      prev.filter((lead) => lead.id !== id)
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Delete failed");
+
+  }
+};
 
   // ✅ FILTER + SEARCH
-  const filteredLeads = leads.filter((lead) => {
+const filteredLeads = leads.filter((lead) => {
+
+  const safeName = lead.name || "";
+  const safePhone = lead.phone || "";
+
   const matchesSearch =
-    lead.name.toLowerCase().includes(search.toLowerCase()) ||
-    lead.phone.includes(search);
+    safeName.toLowerCase().includes(search.toLowerCase()) ||
+    safePhone.includes(search);
 
   const matchesFilter =
     filter === "All" || lead.status === filter;
@@ -202,7 +264,12 @@ saveLeadToBackend();
   const matchesLocation =
     locationFilter === "All" || lead.location === locationFilter;
 
-  return matchesSearch && matchesFilter && matchesBudget && matchesLocation;
+  return (
+    matchesSearch &&
+    matchesFilter &&
+    matchesBudget &&
+    matchesLocation
+  );
 });
 
   // 🔥 FOLLOW-UP STATUS
@@ -285,7 +352,14 @@ saveLeadToBackend();
               placeholder="Enter Phone"
               value={phone}
               maxLength={10}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+
+  const value = e.target.value.replace(/\D/g, "");
+
+  if (value.length <= 10) {
+    setPhone(value);
+  }
+}}
             />
 
             <select value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -321,26 +395,29 @@ saveLeadToBackend();
           {/* LIST */}
           {filteredLeads.map((lead) => (
             <div
-             key={lead.phone} 
+             key={lead.phone || lead.id}
              className="lead-item"
              onClick={() => setSelectedLead(lead)}
              >
               <span>
                 {lead.name} ({lead.phone})
-                <span className={`status ${lead.status.toLowerCase()}`}>
-                  {" "}{lead.status}
-                </span>
+                <span
+  className={`status ${(lead.status || "Warm").toLowerCase()}`}
+>
+  {" "}
+  {lead.status || "Warm"}
+</span>
 
                 {lead.followUpDate && (
                   <span className={`follow-tag ${getFollowUpStatus(lead.followUpDate)}`}>
-                    📅 {lead.followUpDate}
+                    📅 {new Date(lead.followUpDate).toLocaleDateString()}
                   </span>
                 )}
               </span>
 
               <div>
                 <button onClick={(e) => { e.stopPropagation(); startEdit(lead); }}>✏️</button>
-                <button onClick={(e) => { e.stopPropagation(); handleDelete(lead.phone); }}>❌</button>
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }}>❌</button>
               </div>
             </div>
           ))}
@@ -363,6 +440,12 @@ saveLeadToBackend();
       <p><b>Budget:</b> {selectedLead.budget}</p>
 
       <p><b>Location:</b> {selectedLead.location}</p>
+      <p>
+  <b>Date:</b>{" "}
+  {selectedLead.createdAt
+    ? new Date(selectedLead.createdAt).toLocaleDateString()
+    : "N/A"}
+</p>
 
       <hr />
 
