@@ -1,13 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database.db import engine, Base
-import models.schema
 from routers import chat
 from routers import dashboard
 import logging
+import models.schema
 
 # Setup basic logging
 logging.basicConfig(level=logging.INFO)
+from database.db import engine, Base
 
 # Create tables
 Base.metadata.create_all(bind=engine)

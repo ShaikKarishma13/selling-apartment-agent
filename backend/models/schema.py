@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
 from sqlalchemy.sql import func
 from database.db import Base
@@ -21,19 +23,25 @@ class Property(Base):
     images = Column(Text) # comma separated URLs or JSON string
 
 class LeadStatus(Base):
-    __tablename__ = 'lead_status'
+    __tablename__ = "lead_status"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    user_id = Column(
-        Integer,
-        ForeignKey('users.id'),
-        nullable=True
-    )
+    name = Column(String, nullable=False)
 
-    status = Column(String)
+    phone = Column(String, nullable=False)
 
-    score = Column(Integer)
+    status = Column(String, default="Warm")
+
+    budget = Column(String)
+
+    location = Column(String)
+
+    follow_up_date = Column(String)
+
+    ai_response = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     updated_at = Column(
         DateTime(timezone=True),

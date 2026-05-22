@@ -9,7 +9,7 @@ from models.pydantic_schemas import (
 )
 
 from models.schema import Interaction, LeadStatus
-
+from fastapi import HTTPException
 from services.llm_service import generate_sales_response
 from services.lead_scoring import classify_lead
 
@@ -55,10 +55,22 @@ async def process_chat_input(
 
     # Save lead status
     lead_status = LeadStatus(
-        user_id=None,
-        status=analysis.get("classification", "Warm"),
-        score=85 if analysis.get("classification") == "Hot" else 60
-    )
+
+    name=request.name,
+
+    phone=request.phone,
+
+    status=request.status,
+
+    budget=request.budget,
+
+    location=request.location,
+
+    follow_up_date=request.follow_up_date,
+
+    ai_response=bot_response
+
+)
 
     db.add(lead_status)
 
@@ -72,17 +84,44 @@ async def process_chat_input(
 @router.get("/all-leads")
 def get_all_leads(db: Session = Depends(get_db)):
 
-    interactions = db.query(Interaction).all()
+    leads_data = db.query(LeadStatus).all()
 
     leads = []
 
-    for item in interactions:
+    for item in leads_data:
+
         leads.append({
+
             "id": item.id,
-            "message": item.message,
-            "response": item.response,
-            "source": item.source,
-            "timestamp": str(item.timestamp)
+
+            "name": item.name,
+
+            "phone": item.phone,
+
+            "status": item.status,
+
+            "budget": item.budget,
+
+            "location": item.location,
+
+            "follow_up_date": item.follow_up_date,
+
+            "ai_response": item.ai_response,
+
+            "created_at": str(item.created_at)
+
         })
 
     return leads
+@router.delete("/delete-lead/{lead_id}")
+def delete_lead(lead_id: int, db: Session = Depends(get_db)):
+
+    lead = db.query(LeadStatus).filter(LeadStatus.id == lead_id).first()
+
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    db.delete(lead)
+    db.commit()
+
+    return {"message": "Lead deleted successfully"}
