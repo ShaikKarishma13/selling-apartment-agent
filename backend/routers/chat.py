@@ -8,8 +8,13 @@ from models.pydantic_schemas import (
     ChatMessage
 )
 
+<<<<<<< HEAD
 from models.schema import Interaction, LeadStatus
 from fastapi import HTTPException
+=======
+from models.schema import Interaction, LeadStatus, User
+
+>>>>>>> 47c0e9e (Integrated frontend backend and PostgreSQL)
 from services.llm_service import generate_sales_response
 from services.lead_scoring import classify_lead
 
@@ -43,9 +48,21 @@ async def process_chat_input(
 
     analysis = await classify_lead(full_history)
 
+    # Create user
+    new_user = User(
+        name=request.user_input.split(" ")[3],
+        phone=request.session_id,
+        budget="Medium",
+        location="Bangalore"
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
     # Save interaction
     user_interaction = Interaction(
-        user_id=None,
+        user_id=new_user.id,
         message=request.user_input,
         response=bot_response,
         source="text"
@@ -55,6 +72,7 @@ async def process_chat_input(
 
     # Save lead status
     lead_status = LeadStatus(
+<<<<<<< HEAD
 
     name=request.name,
 
@@ -71,6 +89,12 @@ async def process_chat_input(
     ai_response=bot_response
 
 )
+=======
+        user_id=new_user.id,
+        status=analysis.get("classification", "Warm"),
+        score=85 if analysis.get("classification") == "Hot" else 60
+    )
+>>>>>>> 47c0e9e (Integrated frontend backend and PostgreSQL)
 
     db.add(lead_status)
 
@@ -81,9 +105,12 @@ async def process_chat_input(
         sentiment=analysis.get("reason", "No reason provided"),
         detected_intent=analysis.get("classification", "Unknown")
     )
+
+
 @router.get("/all-leads")
 def get_all_leads(db: Session = Depends(get_db)):
 
+<<<<<<< HEAD
     leads_data = db.query(LeadStatus).all()
 
     leads = []
@@ -110,6 +137,30 @@ def get_all_leads(db: Session = Depends(get_db)):
 
             "created_at": str(item.created_at)
 
+=======
+    interactions = (
+        db.query(Interaction, User, LeadStatus)
+        .join(User, Interaction.user_id == User.id)
+        .join(LeadStatus, LeadStatus.user_id == User.id)
+        .all()
+    )
+
+    leads = []
+
+    for interaction, user, status in interactions:
+        leads.append({
+            "id": interaction.id,
+            "name": user.name,
+            "phone": user.phone,
+            "status": status.status,
+            "message": interaction.message,
+            "response": interaction.response,
+            "source": interaction.source,
+            "timestamp": str(interaction.timestamp),
+            "budget": user.budget,
+            "location": user.location,
+            "followUpDate": str(interaction.timestamp.date())
+>>>>>>> 47c0e9e (Integrated frontend backend and PostgreSQL)
         })
 
     return leads
