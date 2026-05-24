@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from database.db import get_db
 
@@ -8,15 +9,10 @@ from models.pydantic_schemas import (
     ChatMessage
 )
 
-<<<<<<< HEAD
-from models.schema import Interaction, LeadStatus
-from fastapi import HTTPException
-=======
 from models.schema import Interaction, LeadStatus, User
-
->>>>>>> 47c0e9e (Integrated frontend backend and PostgreSQL)
 from services.llm_service import generate_sales_response
 from services.lead_scoring import classify_lead
+
 
 import logging
 
@@ -50,10 +46,10 @@ async def process_chat_input(
 
     # Create user
     new_user = User(
-        name=request.user_input.split(" ")[3],
-        phone=request.session_id,
-        budget="Medium",
-        location="Bangalore"
+        name=request.name,
+        phone=request.phone,
+        budget=request.budget,
+        location=request.location
     )
 
     db.add(new_user)
@@ -72,7 +68,8 @@ async def process_chat_input(
 
     # Save lead status
     lead_status = LeadStatus(
-<<<<<<< HEAD
+
+
 
     name=request.name,
 
@@ -88,13 +85,16 @@ async def process_chat_input(
 
     ai_response=bot_response
 
-)
-=======
+
+
+        
+
         user_id=new_user.id,
-        status=analysis.get("classification", "Warm"),
-        score=85 if analysis.get("classification") == "Hot" else 60
+        status=request.status,
+        score=85 if request.status == "Hot" else 60
+
     )
->>>>>>> 47c0e9e (Integrated frontend backend and PostgreSQL)
+
 
     db.add(lead_status)
 
@@ -110,34 +110,6 @@ async def process_chat_input(
 @router.get("/all-leads")
 def get_all_leads(db: Session = Depends(get_db)):
 
-<<<<<<< HEAD
-    leads_data = db.query(LeadStatus).all()
-
-    leads = []
-
-    for item in leads_data:
-
-        leads.append({
-
-            "id": item.id,
-
-            "name": item.name,
-
-            "phone": item.phone,
-
-            "status": item.status,
-
-            "budget": item.budget,
-
-            "location": item.location,
-
-            "follow_up_date": item.follow_up_date,
-
-            "ai_response": item.ai_response,
-
-            "created_at": str(item.created_at)
-
-=======
     interactions = (
         db.query(Interaction, User, LeadStatus)
         .join(User, Interaction.user_id == User.id)
@@ -148,6 +120,7 @@ def get_all_leads(db: Session = Depends(get_db)):
     leads = []
 
     for interaction, user, status in interactions:
+
         leads.append({
             "id": interaction.id,
             "name": user.name,
@@ -160,19 +133,25 @@ def get_all_leads(db: Session = Depends(get_db)):
             "budget": user.budget,
             "location": user.location,
             "followUpDate": str(interaction.timestamp.date())
->>>>>>> 47c0e9e (Integrated frontend backend and PostgreSQL)
         })
 
     return leads
-@router.delete("/delete-lead/{lead_id}")
-def delete_lead(lead_id: int, db: Session = Depends(get_db)):
 
-    lead = db.query(LeadStatus).filter(LeadStatus.id == lead_id).first()
 
-    if not lead:
+@router.delete("/delete-lead/{phone}")
+def delete_lead(phone: str, db: Session = Depends(get_db)):
+
+    user = db.query(User).filter(User.phone == phone).first()
+
+    if not user:
         raise HTTPException(status_code=404, detail="Lead not found")
 
-    db.delete(lead)
+    db.query(Interaction).filter(Interaction.user_id == user.id).delete()
+
+    db.query(LeadStatus).filter(LeadStatus.user_id == user.id).delete()
+
+    db.delete(user)
+
     db.commit()
 
     return {"message": "Lead deleted successfully"}

@@ -11,6 +11,12 @@ class ChatRequest(BaseModel):
     session_id: str = Field(..., description="Unique session identifier")
     user_input: str = Field(..., min_length=1, max_length=1000)
 
+    name: str
+    phone: str
+    budget: str
+    location: str
+    status: str
+
     history: Optional[List[ChatMessage]] = []
 
     # LEAD DATA
@@ -19,7 +25,7 @@ class ChatRequest(BaseModel):
     status: str
     budget: str
     location: str
-    follow_up_date: str
+    follow_up_date: strs
 
 
 class ChatResponse(BaseModel):
