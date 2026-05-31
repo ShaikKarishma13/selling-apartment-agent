@@ -6,7 +6,7 @@ function LeadForm({ onAddLead }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const isValid = name.trim() !== "" && /^[0-9]{10}$/.test(phone);
+  const isValid = name.trim() !== "" && /^\+91[0-9]{10}$/.test(phone);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -16,10 +16,10 @@ function LeadForm({ onAddLead }) {
       return;
     }
 
-    const phoneRegex = /^[0-9]{10}$/;
+    const phoneRegex = /^\+91[0-9]{10}$/;
 
     if (!phoneRegex.test(phone)) {
-      setError("Phone number must be exactly 10 digits");
+      setError("Phone number must be in the format +91XXXXXXXXXX.");
       return;
     }
 
@@ -62,11 +62,15 @@ function LeadForm({ onAddLead }) {
 
         <input
           type="text"
-          placeholder="Enter Phone"
+          placeholder="Enter Phone in +91 format"
           value={phone}
-          onChange={(e) =>
-            setPhone(e.target.value.replace(/\D/g, ""))
-          }
+          onChange={(e) => {
+            let value = e.target.value.replace(/[^\d+]/g, "");
+            if (value.length > 13) {
+              value = value.slice(0, 13);
+            }
+            setPhone(value);
+          }}
         />
         <br /><br />
 

@@ -55,3 +55,14 @@ class Interaction(Base):
     response = Column(Text)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
     source = Column(String) # voice, text, whatsapp
+
+class CallLog(Base):
+    __tablename__ = 'call_logs'
+    id = Column(Integer, primary_key=True, index=True)
+    call_id = Column(String, unique=True, index=True) # Twilio Call SID
+    user_id = Column(Integer, ForeignKey('users.id'))
+    status = Column(String) # initiated, in-progress, completed, failed
+    duration = Column(Integer) # in seconds
+    start_time = Column(DateTime(timezone=True), server_default=func.now())
+    end_time = Column(DateTime(timezone=True))
+    transcript = Column(Text)

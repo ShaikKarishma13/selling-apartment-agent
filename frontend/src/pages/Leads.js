@@ -15,42 +15,51 @@ function Leads({ leads, setLeads, setActivities }) {
   const [selectedLead, setSelectedLead] = useState(null);
   const [budget, setBudget] = useState("");
   const [location, setLocation] = useState("");
+  const [transcripts, setTranscripts] = useState([]);
+
   useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        const response = await axios.get(
+          "http://127.0.0.1:8000/api/chat/all-leads"
+        );
+        const backendLeads = response.data.map((item) => ({
+          name: item.name || "Unknown",
+          phone: item.phone || "N/A",
+          status: item.status || "Warm",
+          userMessage: item.message,
+          aiResponse: item.response,
+          sentiment: "Fetched from backend",
+          budget: item.budget || "Medium",
+          location: item.location || "Hyderabad",
+          createdAt: item.timestamp || new Date().toISOString(),
+          followUpDate: item.followUpDate
+            ? new Date(item.followUpDate).toISOString().split("T")[0]
+            : null,
+        }));
+        setLeads(backendLeads);
+      } catch (error) {
+        console.error("Failed fetching leads", error);
+      }
+    };
+    fetchLeads();
+  }, [setLeads]);
 
-  const fetchLeads = async () => {
-
-    try {
-
-      const response = await axios.get(
-        "http://127.0.0.1:8000/api/chat/all-leads"
-      );
-
-      const backendLeads = response.data.map((item) => ({
-  name: item.name || "Unknown",
-  phone: item.phone || "N/A",
-  status: item.status || "Warm",
-  userMessage: item.message,
-  aiResponse: item.response,
-  sentiment: "Fetched from backend",
-  budget: item.budget || "Medium",
-  location: item.location || "Hyderabad",
-  createdAt: item.timestamp || new Date().toISOString(),
-  followUpDate: item.followUpDate
-  ? new Date(item.followUpDate).toISOString().split("T")[0]
-   : null,
-}));
-
-      setLeads(backendLeads);
-
-    } catch (error) {
-      console.error("Failed fetching leads", error);
+  useEffect(() => {
+    if (selectedLead) {
+      const fetchTranscripts = async () => {
+        try {
+          const response = await axios.get(
+            `http://127.0.0.1:8000/voice/transcript-by-phone/${selectedLead.phone}`
+          );
+          setTranscripts(response.data);
+        } catch (error) {
+          console.error("Failed fetching transcripts", error);
+        }
+      };
+      fetchTranscripts();
     }
-  };
-
-  fetchLeads();
-
-}, [setLeads]);
- 
+  }, [selectedLead]);
 
   // 🔥 HELPER → AI STYLE LOG
   const logActivity = (message) => {
@@ -86,14 +95,14 @@ function Leads({ leads, setLeads, setActivities }) {
       return;
     }
 
-    if (!/^[0-9]{10}$/.test(phone)) {
-      alert("Phone must be exactly 10 digits");
+    if (!/^\+91[0-9]{10}$/.test(phone)) {
+      alert("Phone must be in the format +91XXXXXXXXXX");
       return;
     }
 
     // ===== EDIT MODE =====
     if (editLead) {
-      const updateLeadInBackend =  async () => {
+      const updateLeadInBackend = async () => {
         try {
           await axios.put(
             `http://127.0.0.1:8000/api/chat/update-lead/${editLead.phone}`,
@@ -110,98 +119,85 @@ function Leads({ leads, setLeads, setActivities }) {
             }
           );
           const updateLeads = leads.map((l) =>
+            l.phone === editLead.phone
+              ? {
+                  ...l,
+                  name,
+                  phone,
+                  status,
+                  budget: budget || "Low",
+                  location: location || "Hyderabad",
+                  followUpDate: followUpDate || null,
+                }
+              : l
+          );
 
+          setLeads(updateLeads);
 
+          // 🔥 AI STYLE LOGS
+          logActivity(`AI updated lead ${name} → Status changed to ${status}`);
 
+          if (followUpDate) {
+            logActivity(`Follow-up scheduled for ${name} on ${followUpDate}`);
+          }
 
-
-        l.phone === editLead.phone
-          ? {
-              ...l,
-              name,
-              phone,
-              status,
-              budget: budget || "Low",
-              location: location || "Hyderabad",
-              followUpDate: followUpDate || null,
-            }
-          : l
-      );
-
-      setLeads(updateLeads);
-
-      // 🔥 AI STYLE LOGS
-      logActivity(`AI updated lead ${name} → Status changed to ${status}`);
-      
-      if (followUpDate) {
-        logActivity(`Follow-up scheduled for ${name} on ${followUpDate}`);
-      }
-
-      setEditLead(null);
-
-    } catch (error) {
-      console.error(error);
-      alert("Failed to update lead");
-    }
-  };
-  updateLeadInBackend();
-}
-
-
-    // ===== ADD MODE =====
-    else {
+          setEditLead(null);
+        } catch (error) {
+          console.error(error);
+          alert("Failed to update lead");
+        }
+      };
+      updateLeadInBackend();
+    } else {
+      // ===== ADD MODE =====
       if (leads.some((lead) => lead.phone === phone)) {
         alert("Duplicate phone number not allowed");
         return;
       }
 
       const saveLeadToBackend = async () => {
-  try {
-    const response = await axios.post(
-  "http://127.0.0.1:8000/api/chat/process-input",
-  {
-    session_id: phone,
-    user_input: `Hi, I am ${name}. Looking for apartment in ${location} with ${budget} budget.`,
-    
-    name: name,
-    phone: phone,
-    budget: budget,
-    location: location,
-    status: status,
-    follow_up_date: followUpDate,
+        try {
+          const response = await axios.post(
+            "http://127.0.0.1:8000/api/chat/process-input",
+            {
+              session_id: phone,
+              user_input: `Hi, I am ${name}. Looking for apartment in ${location} with ${budget} budget.`,
+              name: name,
+              phone: phone,
+              budget: budget,
+              location: location,
+              status: status,
+              follow_up_date: followUpDate,
+              history: [],
+            }
+          );
 
-    history: [],
-  }
-);
+          console.log(response.data);
 
-    console.log(response.data);
+          const newLead = {
+            name,
+            phone,
+            userMessage: `Hi, I am ${name}. Looking for apartment in ${location} with ${budget} budget.`,
+            status: status,
+            aiResponse: response.data.response_text,
+            sentiment: response.data.sentiment,
+            budget: budget || "Low",
+            location: location || "Hyderabad",
+            createdAt: new Date().toISOString(),
+            followUpDate: followUpDate || null,
+          };
 
-    const newLead = {
-      name,
-      phone,
-      userMessage: `Hi, I am ${name}. Looking for apartment in ${location} with ${budget} budget.`,
-      status: status,
-      aiResponse: response.data.response_text,
-      sentiment: response.data.sentiment,
-      budget: budget || "Low",
-      location: location || "Hyderabad",
-      createdAt: new Date().toISOString(),
-      followUpDate: followUpDate || null,
-      
-    };
+          setLeads((prev) => [...prev, newLead]);
 
-    setLeads((prev) => [...prev, newLead]);
+          logActivity(`AI analyzed ${name}`);
+          logActivity(`Lead classified as ${response.data.detected_intent}`);
+        } catch (error) {
+          console.error(error);
+          alert("Backend connection failed");
+        }
+      };
 
-    logActivity(`AI analyzed ${name}`);
-    logActivity(`Lead classified as ${response.data.detected_intent}`);
-
-  } catch (error) {
-    console.error(error);
-    alert("Backend connection failed");
-  }
-};
-
-saveLeadToBackend();
+      saveLeadToBackend();
 
       if (followUpDate) {
         logActivity(`AI scheduled follow-up for ${name} on ${followUpDate}`);
@@ -218,46 +214,79 @@ saveLeadToBackend();
   };
 
   // ✅ DELETE
-const handleDelete = async (phone) => {
+  const handleDelete = async (phone) => {
+    try {
+      await axios.delete(
+        `http://127.0.0.1:8000/api/chat/delete-lead/${phone}`
+      );
 
-  try {
+      const leadToDelete = leads.find((l) => l.phone === phone);
 
-    await axios.delete(
-      `http://127.0.0.1:8000/api/chat/delete-lead/${phone}`
-    );
+      setLeads(leads.filter((lead) => lead.phone !== phone));
 
-    const leadToDelete = leads.find((l) => l.phone === phone);
+      // 🔥 AI STYLE LOG
+      logActivity(`AI removed lead: ${leadToDelete.name}`);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to delete lead");
+    }
+  };
 
-    setLeads(leads.filter((lead) => lead.phone !== phone));
+  // 📞 CALL LEAD
+  const handleCall = async (lead) => {
+    if (!lead || !lead.phone) {
+      alert("Lead phone number is missing.");
+      return;
+    }
 
-    // 🔥 AI STYLE LOG
-    logActivity(`AI removed lead: ${leadToDelete.name}`);
+    try {
+      const formData = new URLSearchParams();
+      formData.append('to_number', lead.phone);
+      formData.append('name', lead.name);
+      formData.append('budget', lead.budget || 'Not specified');
+      formData.append('location', lead.location || 'Not specified');
 
-  } catch (error) {
-    console.error(error);
-    alert("Failed to delete lead");
-  }
-};
+      logActivity(`🤙 Initiating call to ${lead.name} at ${lead.phone}...`);
+      
+      const response = await axios.post(
+        "http://127.0.0.1:8000/voice/start",
+        formData,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        }
+      );
 
-    
+      if (response.data.status === "success") {
+        alert(`Call initiated successfully to ${lead.name}. Call SID: ${response.data.call_sid}`);
+        logActivity(`✅ Call to ${lead.name} connected. SID: ${response.data.call_sid}`);
+      } else {
+        throw new Error(response.data.message || "Unknown error occurred.");
+      }
+
+    } catch (error) {
+      console.error("Failed to initiate call", error);
+      alert(`Failed to initiate call: ${error.message}`);
+      logActivity(`❌ Failed to call ${lead.name}. Reason: ${error.message}`);
+    }
+  };
 
   // ✅ FILTER + SEARCH
   const filteredLeads = leads.filter((lead) => {
-  const matchesSearch =
-    lead.name.toLowerCase().includes(search.toLowerCase()) ||
-    lead.phone.includes(search);
+    const matchesSearch =
+      lead.name.toLowerCase().includes(search.toLowerCase()) ||
+      lead.phone.includes(search);
 
-  const matchesFilter =
-    filter === "All" || lead.status === filter;
+    const matchesFilter = filter === "All" || lead.status === filter;
 
-  const matchesBudget =
-    budgetFilter === "All" || lead.budget === budgetFilter;
+    const matchesBudget = budgetFilter === "All" || lead.budget === budgetFilter;
 
-  const matchesLocation =
-    locationFilter === "All" || lead.location === locationFilter;
+    const matchesLocation =
+      locationFilter === "All" || lead.location === locationFilter;
 
-  return matchesSearch && matchesFilter && matchesBudget && matchesLocation;
-});
+    return matchesSearch && matchesFilter && matchesBudget && matchesLocation;
+  });
 
   // 🔥 FOLLOW-UP STATUS
   const getFollowUpStatus = (date) => {
@@ -289,42 +318,31 @@ const handleDelete = async (phone) => {
 
       {/* FILTER */}
       <div className="filters-row">
+        <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+          <option value="All">All Leads</option>
+          <option value="Hot">🔥 Hot</option>
+          <option value="Warm">🌤️ Warm</option>
+          <option value="Cold">❄️ Cold</option>
+        </select>
 
-  <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-    <option value="All">All Leads</option>
-    <option value="Hot">🔥 Hot</option>
-    <option value="Warm">🌤️ Warm</option>
-    <option value="Cold">❄️ Cold</option>
-  </select>
+        <select value={budgetFilter} onChange={(e) => setBudgetFilter(e.target.value)}>
+          <option value="All">All Budget</option>
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+        </select>
 
-  
-  <select value={budgetFilter} onChange={(e) => setBudgetFilter(e.target.value)}>
-    <option value="All">All Budget</option>
-    <option value="Low">Low</option>
-    <option value="Medium">Medium</option>
-    <option value="High">High</option>
-  </select>
-  
-  
-
-
-  
-  <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
-    <option value="All">All Location</option>
-    <option value="Hyderabad">Hyderabad</option>
-    <option value="Bangalore">Bangalore</option>
-    <option value="Mumbai">Mumbai</option>
-  </select>
-  
-  
-
-</div>
+        <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+          <option value="All">All Location</option>
+          <option value="Hyderabad">Hyderabad</option>
+          <option value="Bangalore">Bangalore</option>
+          <option value="Mumbai">Mumbai</option>
+        </select>
+      </div>
 
       <div className="leads-container">
-
         {/* LEFT */}
         <div className="leads-left">
-
           {/* FORM */}
           <div className="lead-form">
             <input
@@ -336,9 +354,9 @@ const handleDelete = async (phone) => {
 
             <input
               type="text"
-              placeholder="Enter Phone"
+              placeholder="Enter Phone in +91 format"
               value={phone}
-              maxLength={10}
+              maxLength={13}
               onChange={(e) => setPhone(e.target.value)}
             />
 
@@ -354,18 +372,18 @@ const handleDelete = async (phone) => {
               onChange={(e) => setFollowUpDate(e.target.value)}
             />
             <select value={budget} onChange={(e) => setBudget(e.target.value)}>
-  <option value="">Select Budget</option>
-  <option value="Low">Low</option>
-  <option value="Medium">Medium</option>
-  <option value="High">High</option>
-</select>
+              <option value="">Select Budget</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
 
-<select value={location} onChange={(e) => setLocation(e.target.value)}>
-  <option value="">Select Location</option>
-  <option value="Hyderabad">Hyderabad</option>
-  <option value="Bangalore">Bangalore</option>
-  <option value="Mumbai">Mumbai</option>
-</select>
+            <select value={location} onChange={(e) => setLocation(e.target.value)}>
+              <option value="">Select Location</option>
+              <option value="Hyderabad">Hyderabad</option>
+              <option value="Bangalore">Bangalore</option>
+              <option value="Mumbai">Mumbai</option>
+            </select>
 
             <button onClick={handleSave}>
               {editLead ? "Update Lead" : "Add Lead"}
@@ -375,107 +393,161 @@ const handleDelete = async (phone) => {
           {/* LIST */}
           {filteredLeads.map((lead) => (
             <div
-             key={lead.phone} 
-             className="lead-item"
-             onClick={() => setSelectedLead(lead)}
-             >
+              key={lead.phone}
+              className="lead-item"
+              onClick={() => setSelectedLead(lead)}
+            >
               <span>
                 {lead.name} ({lead.phone})
                 <span className={`status ${lead.status.toLowerCase()}`}>
-                  {" "}{lead.status}
+                  {" "}
+                  {lead.status}
                 </span>
 
                 {lead.followUpDate && (
-                  <span className={`follow-tag ${getFollowUpStatus(lead.followUpDate)}`}>
+                  <span
+                    className={`follow-tag ${getFollowUpStatus(
+                      lead.followUpDate
+                    )}`}
+                  >
                     📅 {new Date(lead.followUpDate).toLocaleDateString()}
                   </span>
                 )}
               </span>
 
               <div>
-                <button onClick={(e) => { e.stopPropagation(); startEdit(lead); }}>✏️</button>
-                <button onClick={(e) => { e.stopPropagation(); handleDelete(lead.phone); }}>❌</button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCall(lead);
+                  }}
+                >
+                  📞
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startEdit(lead);
+                  }}
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(lead.phone);
+                  }}
+                >
+                  ❌
+                </button>
               </div>
             </div>
           ))}
-
         </div>
 
         <div className="leads-right">
+          {selectedLead ? (
+            <div className="lead-details">
+              <h2>Lead Details 👤</h2>
 
-  {selectedLead ? (
-    <div className="lead-details">
+              <p>
+                <b>Name:</b> {selectedLead.name}
+              </p>
 
-      <h2>Lead Details 👤</h2>
+              <p>
+                <b>Phone:</b> {selectedLead.phone}
+              </p>
 
-      <p><b>Name:</b> {selectedLead.name}</p>
+              <p>
+                <b>Status:</b> {selectedLead.status}
+              </p>
 
-      <p><b>Phone:</b> {selectedLead.phone}</p>
+              <p>
+                <b>Budget:</b> {selectedLead.budget}
+              </p>
 
-      <p><b>Status:</b> {selectedLead.status}</p>
+              <p>
+                <b>Location:</b> {selectedLead.location}
+              </p>
 
-      <p><b>Budget:</b> {selectedLead.budget}</p>
+              <hr />
 
-      <p><b>Location:</b> {selectedLead.location}</p>
+              <h3>AI Conversation 💬</h3>
 
-      <hr />
+              <div
+                style={{
+                  background: "rgba(25, 20, 60, 0.45)",
+                  backdropFilter: "blur(16px)",
+                  WebkitBackdropFilter: "blur(16px)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+                  padding: "15px",
+                  borderRadius: "10px",
+                  marginTop: "10px",
+                  color: "white",
+                }}
+              >
+                <p>
+                  <b>User:</b> {selectedLead.userMessage}
+                </p>
+                <p>
+                  <b>AI:</b> {selectedLead.aiResponse || "No AI response"}
+                </p>
+              </div>
 
-      <h3>AI Conversation 💬</h3>
+              <hr />
 
-      <div
-  style={{
-    background: "rgba(25, 20, 60, 0.45)",
-    backdropFilter: "blur(16px)",
-    WebkitBackdropFilter: "blur(16px)",
-    border: "1px solid rgba(255,255,255,0.08)",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
-    padding: "15px",
-    borderRadius: "10px",
-    marginTop: "10px",
-    color: "white"
-  }}
->
+              <h3>Call Transcripts 🎙️</h3>
+              {transcripts.length > 0 ? (
+                transcripts.map((transcript, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      background: "rgba(25, 20, 60, 0.45)",
+                      backdropFilter: "blur(16px)",
+                      WebkitBackdropFilter: "blur(16px)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+                      padding: "15px",
+                      borderRadius: "10px",
+      
+                      marginTop: "10px",
+                      color: "white",
+                    }}
+                  >
+                    <p>
+                      <b>Call SID:</b> {transcript.call_id}
+                    </p>
+                    <p>
+                      <b>Transcript:</b> {transcript.transcript || "Not available"}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p>No call transcripts found.</p>
+              )}
 
-        <p>
-  <b>User:</b> {selectedLead.userMessage}
-</p>
-        <p>
-          <b>AI:</b> {selectedLead.aiResponse || "No AI response"}
-        </p>
+              <hr />
 
-      </div>
+              <h3>AI Analysis 🧠</h3>
 
-      <hr />
-
-      <h3>AI Analysis 🧠</h3>
-
-      <p>
-        {selectedLead.sentiment || "No analysis"}
-      </p>
-
-    </div>
-
-  ) : (
-    <div className="lead-details">
-      <h2>Select a lead to view details</h2>
-    </div>
-  )}
-
-</div>
-
-  {/* TOP → CHART */}
-  <div className="chart-box">
-    <PieChartSection leads={leads} setFilter={setFilter} />
-  </div>
-
-  {/* BOTTOM → LEAD DETAIL */}
-
-
-
+              <p>{selectedLead.sentiment || "No analysis"}</p>
+            </div>
+          ) : (
+            <div className="lead-details">
+              <h2>Select a lead to view details</h2>
+            </div>
+          )}
         </div>
 
+        {/* TOP → CHART */}
+        <div className="chart-box">
+          <PieChartSection leads={leads} setFilter={setFilter} />
+        </div>
+
+        {/* BOTTOM → LEAD DETAIL */}
       </div>
-    
+    </div>
   );
 }
 
